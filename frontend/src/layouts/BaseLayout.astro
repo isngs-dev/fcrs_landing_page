@@ -1,0 +1,42 @@
+---
+import "../styles/tokens.css";
+
+export interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="First Class Roofing & Solar | Trusted AL & GA Roofing" />
+    <meta
+      property="og:description"
+      content="Fast, honest roofing built for Southern weather. Free, zero-obligation inspection for Alabama & Georgia homeowners and businesses."
+    />
+    <meta property="og:site_name" content="First Class Roofing & Solar" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+  </head>
+  <body>
+    <slot />
+    <script src="../scripts/main.js"></script>
+  </body>
+</html>

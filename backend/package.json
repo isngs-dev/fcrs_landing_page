@@ -1,0 +1,24 @@
+{
+  "name": "fcrs-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FCRS landing page estimate-request API — validation, Google Sheets append, Gmail notifications.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --env-file=.env src/server.js",
+    "start": "node src/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0",
+    "serverless-http": "^4.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.8"
+  }
+}
