@@ -25,6 +25,19 @@ export const COLUMN_ORDER = [
 const DEFAULT_RANGE = "Leads!A:I";
 const DEFAULT_DUPLICATE_WINDOW_MINUTES = 30;
 
+/**
+ * Duplicate detection only needs timestamp (A) and email (D). Keeping the
+ * configured sheet/tab while narrowing the column span reduces response size
+ * as the lead sheet grows without changing the append range.
+ */
+export function getDuplicateLookupRange(range) {
+  const a1Range = /^(.*!)?A(\d*):[A-Z]+(\d*)$/i.exec(range);
+  if (!a1Range) return range;
+
+  const [, sheetPrefix = "", startRow, endRow] = a1Range;
+  return `${sheetPrefix}A${startRow}:D${endRow}`;
+}
+
 function rowFromSubmission(submission, timestamp) {
   return [
     timestamp,
@@ -48,6 +61,7 @@ function rowFromSubmission(submission, timestamp) {
 export function createSheetsService(env = process.env) {
   const sheetId = env.GOOGLE_SHEET_ID;
   const range = env.GOOGLE_SHEET_RANGE || DEFAULT_RANGE;
+  const duplicateLookupRange = getDuplicateLookupRange(range);
   const duplicateWindowMinutes = Number.parseInt(
     env.DUPLICATE_WINDOW_MINUTES ?? String(DEFAULT_DUPLICATE_WINDOW_MINUTES),
     10
@@ -71,7 +85,7 @@ export function createSheetsService(env = process.env) {
       const sheets = getSheetsClient();
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range,
+        range: duplicateLookupRange,
       });
 
       const rows = response.data.values || [];

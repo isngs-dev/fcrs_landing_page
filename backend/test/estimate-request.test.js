@@ -109,6 +109,19 @@ describe("POST /api/estimate-request", () => {
     expect(emailService.sent).toHaveLength(0);
   });
 
+  it("still captures the lead when the duplicate-check read fails", async () => {
+    const sheetsService = createFakeSheetsService({ throwOnDuplicateCheck: true });
+    const emailService = createFakeEmailService();
+    const app = createApp({ env: testEnv, sheetsService, emailService });
+
+    const res = await request(app).post("/api/estimate-request").send(validPayload);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(sheetsService.rows).toHaveLength(1);
+    expect(emailService.sent).toHaveLength(2);
+  });
+
   it("collapses a same-email resubmit within the window into one row and one email set, still 200", async () => {
     const sheetsService = createFakeSheetsService();
     const emailService = createFakeEmailService();

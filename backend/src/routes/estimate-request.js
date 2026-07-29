@@ -48,7 +48,9 @@ export function createEstimateRequestRouter({ sheetsService, emailService }) {
       }
     } catch (err) {
       console.warn(`Duplicate check failed: ${err && err.message ? err.message : "unknown error"}`);
-      return res.status(500).json(GENERIC_SERVER_ERROR);
+      // Duplicate suppression is protective, but it must not prevent the
+      // primary lead capture. If the read path is temporarily unavailable,
+      // continue to the append and accept the small risk of a duplicate row.
     }
 
     try {

@@ -5,6 +5,9 @@
   "description": "FCRS landing page estimate-request API — validation, Google Sheets append, Gmail notifications.",
   "type": "module",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20.6"
+  },
   "scripts": {
     "dev": "node --env-file=.env src/server.js",
     "start": "node src/server.js",
