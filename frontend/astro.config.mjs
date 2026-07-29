@@ -4,7 +4,7 @@ import { defineConfig } from "astro/config";
 // "Stack" section: frontend/ is Astro static, hand-written CSS only.
 export default defineConfig({
   output: "static",
-  site: "https://fcrsga.com",
+  site: "https://estimate.fcrsga.com",
   build: {
     format: "file",
   },
