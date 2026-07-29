@@ -91,18 +91,26 @@ approve **both** permissions on the one consent screen, then paste back the
 `code` from the redirected URL. The script prints a single refresh token
 covering both scopes — put it in `GOOGLE_OAUTH_REFRESH_TOKEN`.
 
-### Deploying as a serverless function
+### Deploying to Render
 
-The repository is configured for Netlify. The root build installs both app
-packages, builds the static Astro site, and deploys `netlify/functions/api.js`
-as a modern Netlify Function at `/api/*`. That adapter uses
-`@netlify/aws-lambda-compat` around the existing `serverless-http` handler,
-so the local/long-running server can continue using `backend/src/server.js`
-unchanged.
+The repository is configured for [Render](https://render.com) via
+[`render.yaml`](render.yaml), which defines two services:
 
-Keep `PUBLIC_API_URL` unset for this deployment: the function is available on
-the same origin as the static site. Set the backend environment variables in
-Netlify's Functions scope; do not commit a local `.env` file.
+- **`fcrs-api`** — a Node Web Service rooted at `backend/`. It runs as a real
+  long-running process (`npm start` → `node src/server.js`); Render injects
+  `PORT`, which `server.js` already reads. This is not a serverless deploy.
+- **`fcrs-landing`** — a Static Site rooted at `frontend/`, built with
+  `npm run build` and served from `frontend/dist/`.
+
+The static site's `/api/*` rewrite rule proxies requests to the `fcrs-api`
+service, so the browser stays same-origin and `PUBLIC_API_URL` can remain
+unset in production, same as local dev. `render.yaml` is the source of truth
+for the deploy config — check it for the exact build/start commands and
+rewrite destination.
+
+Backend environment variables are set in the Render dashboard for the
+`fcrs-api` service, not in a committed file. `backend/.env.example` is the
+authoritative list of variable names to configure.
 
 ## Definition of done
 
@@ -119,12 +127,12 @@ and the duplicate-submission policy are documented in `CLAUDE.md`.
 
 ```
 CLAUDE.md              project contract — design tokens, API contract, guardrails
+render.yaml             Render deploy config — fcrs-api + fcrs-landing services
 frontend/              Astro site
   .env.example          PUBLIC_API_URL
 backend/                Express API + Google Sheets + Gmail
   .env.example           OAuth/Sheets/Gmail config
   scripts/get-refresh-token.js   one-off OAuth consent helper
   src/server.js          local/long-running entry point
-  src/handler.js          serverless entry point
 kb/                     read-only design handoff — never edit
 ```

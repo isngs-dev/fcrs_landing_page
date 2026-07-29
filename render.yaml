@@ -1,0 +1,56 @@
+services:
+  # ---------------------------------------------------------------
+  # Backend — Express API. Long-running Node process, NOT serverless.
+  # Render injects PORT; backend/src/server.js already reads it.
+  # ---------------------------------------------------------------
+  - type: web
+    runtime: node
+    name: fcrs-api
+    rootDir: backend
+    plan: starter
+    region: oregon
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_REFRESH_TOKEN
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SHEET_RANGE
+        value: Leads!A:I
+      - key: GMAIL_SENDER_ADDRESS
+        sync: false
+      - key: INTERNAL_NOTIFICATION_EMAIL
+        sync: false
+      - key: DUPLICATE_WINDOW_MINUTES
+        value: "30"
+      - key: ALLOWED_ORIGIN
+        sync: false
+
+  # ---------------------------------------------------------------
+  # Frontend — Astro static output. The /api/* rewrite proxies to the
+  # backend service so the browser stays same-origin (no CORS preflight)
+  # and PUBLIC_API_URL can remain unset.
+  # ---------------------------------------------------------------
+  - type: web
+    runtime: static
+    name: fcrs-landing
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://fcrs-api.onrender.com/api/*

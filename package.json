@@ -6,16 +6,8 @@
     "node": ">=20.6"
   },
   "scripts": {
-    "build": "npm --prefix frontend run build",
     "postinstall": "npm --prefix frontend install && npm --prefix backend install",
+    "build": "npm --prefix frontend run build",
     "test": "npm --prefix frontend test && npm --prefix backend test"
-  },
-  "dependencies": {
-    "@netlify/aws-lambda-compat": "^1.0.2",
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "googleapis": "^144.0.0",
-    "serverless-http": "^4.0.0",
-    "zod": "^3.24.1"
   }
 }
