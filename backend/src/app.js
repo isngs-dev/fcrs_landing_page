@@ -1,36 +1,47 @@
 import express from "express";
 import cors from "cors";
 import { createEstimateRequestRouter } from "./routes/estimate-request.js";
-import { createSheetsService } from "./services/sheets.js";
+import { createLeadCreatedRouter } from "./routes/lead-created.js";
+import { createLeadsService } from "./services/leads.js";
 import { createEmailService } from "./services/email/index.js";
 
 const JSON_BODY_LIMIT = "50kb";
 
 /**
  * Builds and returns the configured Express app. Side-effecting
- * collaborators default to the real Google-backed implementations but can be
- * overridden — this is the seam integration tests use to inject mocks so no
- * test ever reaches the real Google APIs.
+ * collaborators default to the real Supabase/EmailJS-backed implementations
+ * but can be overridden — this is the seam integration tests use to inject
+ * mocks so no test ever reaches the real Postgres or EmailJS APIs.
  */
 export function createApp({
   env = process.env,
-  sheetsService = createSheetsService(env),
+  leadsService = createLeadsService({ env }),
   emailService = createEmailService({ env }),
 } = {}) {
   const app = express();
 
-  app.use(
-    cors({
-      origin: env.ALLOWED_ORIGIN || false,
-    })
-  );
+  // Scoped to /api only: /internal/lead-created is called server-to-server
+  // by Supabase's webhook dispatcher with no Origin header, and is
+  // authenticated by the shared secret instead of CORS.
+  app.use("/api", cors({ origin: env.ALLOWED_ORIGIN || false }));
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   app.get("/api/health", (req, res) => {
     res.status(200).json({ ok: true });
   });
 
-  app.use(createEstimateRequestRouter({ sheetsService, emailService }));
+  app.get("/api/health/db", async (req, res) => {
+    try {
+      await leadsService.ping();
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      console.warn(`DB health check failed: ${err && err.message ? err.message : "unknown error"}`);
+      res.status(503).json({ ok: false });
+    }
+  });
+
+  app.use(createEstimateRequestRouter({ leadsService }));
+  app.use(createLeadCreatedRouter({ emailService, env }));
 
   // Final error handler — catches anything unexpected (malformed JSON body,
   // etc.) and always returns the generic client-facing shape, never a stack

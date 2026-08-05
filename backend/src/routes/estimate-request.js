@@ -24,11 +24,17 @@ function formatZodErrors(zodError) {
 }
 
 /**
- * Builds the /api/estimate-request route. Side-effecting collaborators
- * (sheets, email) are passed in through a factory/params object so tests can
- * substitute mocks — nothing here imports googleapis directly.
+ * Builds the /api/estimate-request route. The leads collaborator (Supabase
+ * Postgres-backed) is passed in through a factory/params object so tests can
+ * substitute a mock — nothing here imports `pg` directly.
+ *
+ * Emails are NO LONGER dispatched from this handler. They are sent by the
+ * Supabase Database Webhook (POST /internal/lead-created, see
+ * routes/lead-created.js) fired server-side by Postgres on INSERT, so
+ * delivery never depends on this request/response cycle or the visitor's
+ * browser staying open.
  */
-export function createEstimateRequestRouter({ sheetsService, emailService }) {
+export function createEstimateRequestRouter({ leadsService }) {
   const router = Router();
 
   router.post("/api/estimate-request", async (req, res) => {
@@ -42,7 +48,7 @@ export function createEstimateRequestRouter({ sheetsService, emailService }) {
     const now = new Date();
 
     try {
-      const duplicate = await sheetsService.isDuplicate(submission.email, now);
+      const duplicate = await leadsService.isDuplicate(submission.email, now);
       if (duplicate) {
         return res.status(200).json({ ok: true });
       }
@@ -54,19 +60,10 @@ export function createEstimateRequestRouter({ sheetsService, emailService }) {
     }
 
     try {
-      await sheetsService.appendRow(submission, now);
+      await leadsService.appendRow(submission, now);
     } catch (err) {
-      console.warn(`Sheets append failed: ${err && err.message ? err.message : "unknown error"}`);
+      console.warn(`Lead insert failed: ${err && err.message ? err.message : "unknown error"}`);
       return res.status(500).json(GENERIC_SERVER_ERROR);
-    }
-
-    // Steps 4/5 — secondary, non-fatal. The email service itself wraps each
-    // send individually and never throws, but we guard here too so an
-    // unexpected error in the email layer can never cost the response.
-    try {
-      await emailService.sendLeadEmails(submission, { timestamp: now.toISOString() });
-    } catch (err) {
-      console.warn(`Email dispatch failed: ${err && err.message ? err.message : "unknown error"}`);
     }
 
     return res.status(200).json({ ok: true });

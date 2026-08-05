@@ -1,119 +1,79 @@
-// The two transactional email templates. Plain text bodies (the primary,
-// always-present content) plus a light HTML alternative for the tel:/mailto:
-// links. Copy mirrors the landing page's promises verbatim — "free",
-// "zero-obligation", "no pressure, just an honest assessment" — and never
-// invents a response-time commitment beyond "shortly".
+// The two transactional email "templates" — really just the value params
+// handed to EmailJS. Variable names here MUST match the {{placeholders}}
+// used in the two templates created in the EmailJS dashboard exactly —
+// EmailJS does simple string substitution, so a mismatched key renders as a
+// literal blank in the sent email, not an error.
+//
+// The form (see schema/estimate-request.js) captures a single `name` field,
+// not separate first/last names, and no street address / city — only a
+// zip code. `splitName` derives a best-effort first/last for templates that
+// expect them. The internal-notification template must NOT reference
+// {{Property Address}} / {{City}} — those fields are never collected and
+// were intentionally dropped from that template rather than added to the
+// form (a locked design surface — see CLAUDE.md).
 
 const PHONE_DISPLAY = "(989) 843-4628";
-const PHONE_TEL_HREF = "tel:+19898434628";
-const ENTRY_POINT = "hero estimate form";
+const COMPANY_NAME = "First Class Roofing & Solar";
+
+function splitName(fullName) {
+  const trimmed = String(fullName ?? "").trim();
+  const spaceIndex = trimmed.indexOf(" ");
+  if (spaceIndex === -1) {
+    return { first: trimmed, last: "" };
+  }
+  return {
+    first: trimmed.slice(0, spaceIndex),
+    last: trimmed.slice(spaceIndex + 1).trim(),
+  };
+}
 
 function formatDate(dateValue) {
-  return dateValue && dateValue.trim() !== "" ? dateValue : null;
+  return dateValue && String(dateValue).trim() !== "" ? String(dateValue) : "not specified";
 }
 
 /**
- * Builds the confirmation email sent to the submitter.
+ * Builds the EmailJS send params for the confirmation email sent to the
+ * submitter. Variable names match the "FCRS Confirmation" template:
+ * {{First Name}}, {{Company Name}}, {{Phone Number}}.
  */
-export function buildConfirmationEmail(submission) {
-  const preferredDate = formatDate(submission.date);
-
-  const recapLines = [
-    `Service requested: ${submission.service}`,
-    `State: ${submission.state}`,
-  ];
-  if (preferredDate) {
-    recapLines.push(`Preferred date/time: ${preferredDate}`);
-  }
-
-  const text = [
-    `Hi ${submission.name},`,
-    "",
-    "Thanks for requesting a free roofing estimate from First Class Roofing & Solar. We've received your request.",
-    "",
-    "A specialist will reach out to you shortly to schedule your free, zero-obligation inspection — no pressure, just an honest assessment.",
-    "",
-    "Here's a quick recap of what you requested:",
-    ...recapLines.map((line) => `- ${line}`),
-    "",
-    `Need help sooner? Call us at ${PHONE_DISPLAY}.`,
-    "",
-    "Thanks again,",
-    "First Class Roofing & Solar",
-  ].join("\n");
-
-  const html = [
-    `<p>Hi ${escapeHtml(submission.name)},</p>`,
-    "<p>Thanks for requesting a free roofing estimate from First Class Roofing &amp; Solar. We've received your request.</p>",
-    "<p>A specialist will reach out to you shortly to schedule your free, zero-obligation inspection &mdash; no pressure, just an honest assessment.</p>",
-    "<p>Here's a quick recap of what you requested:</p>",
-    "<ul>",
-    ...recapLines.map((line) => `<li>${escapeHtml(line)}</li>`),
-    "</ul>",
-    `<p>Need help sooner? Call us at <a href="${PHONE_TEL_HREF}">${PHONE_DISPLAY}</a>.</p>`,
-    "<p>Thanks again,<br>First Class Roofing &amp; Solar</p>",
-  ].join("\n");
+export function buildConfirmationEmail(submission, { templateId } = {}) {
+  const { first } = splitName(submission.name);
 
   return {
-    to: submission.email,
-    subject: "We received your free roofing estimate request",
-    text,
-    html,
+    templateId,
+    params: {
+      to_email: submission.email,
+      "First Name": first,
+      "Company Name": COMPANY_NAME,
+      "Phone Number": PHONE_DISPLAY,
+    },
   };
 }
 
 /**
- * Builds the internal lead notification sent to INTERNAL_NOTIFICATION_EMAIL.
- * Every captured field must be present here — this is the template that must
- * stay in sync with the schema, since a field silently missing here is data
- * loss for the sales team.
+ * Builds the EmailJS send params for the internal lead notification sent to
+ * INTERNAL_NOTIFICATION_EMAIL. Variable names match the "FCRS Internal Lead"
+ * template. Every captured field must be present here — this is the
+ * template that must stay in sync with the schema, since a field silently
+ * missing here is data loss for the sales team.
  */
-export function buildInternalNotificationEmail(submission, { to, timestamp }) {
-  const dateDisplay = formatDate(submission.date) || "not specified";
+export function buildInternalNotificationEmail(submission, { to, timestamp, templateId } = {}) {
+  const { first, last } = splitName(submission.name);
   const notesDisplay =
-    submission.notes && submission.notes.trim() !== "" ? submission.notes : "none";
+    submission.notes && String(submission.notes).trim() !== "" ? String(submission.notes) : "none";
 
-  const subject = `New lead: ${submission.service} — ${submission.state} — ${submission.name}`;
-
-  const text = [
-    "New estimate request captured.",
-    "",
-    `Name: ${submission.name}`,
-    `Phone: ${submission.phone}`,
-    `Email: ${submission.email}`,
-    `Service: ${submission.service}`,
-    `State: ${submission.state}`,
-    `Zip: ${submission.zip}`,
-    `Preferred date/time: ${dateDisplay}`,
-    `Notes: ${notesDisplay}`,
-    "",
-    `Submitted: ${timestamp}`,
-    `Entry point: ${ENTRY_POINT}`,
-  ].join("\n");
-
-  const html = [
-    "<p>New estimate request captured.</p>",
-    "<ul>",
-    `<li>Name: ${escapeHtml(submission.name)}</li>`,
-    `<li>Phone: <a href="tel:${escapeHtml(submission.phone)}">${escapeHtml(submission.phone)}</a></li>`,
-    `<li>Email: <a href="mailto:${escapeHtml(submission.email)}">${escapeHtml(submission.email)}</a></li>`,
-    `<li>Service: ${escapeHtml(submission.service)}</li>`,
-    `<li>State: ${escapeHtml(submission.state)}</li>`,
-    `<li>Zip: ${escapeHtml(submission.zip)}</li>`,
-    `<li>Preferred date/time: ${escapeHtml(dateDisplay)}</li>`,
-    `<li>Notes: ${escapeHtml(notesDisplay)}</li>`,
-    "</ul>",
-    `<p>Submitted: ${escapeHtml(timestamp)}<br>Entry point: ${escapeHtml(ENTRY_POINT)}</p>`,
-  ].join("\n");
-
-  return { to, subject, text, html };
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+  return {
+    templateId,
+    params: {
+      to_email: to,
+      "First Name": first,
+      "Last Name": last,
+      "Phone Number": submission.phone,
+      "Email Address": submission.email,
+      "ZIP Code": submission.zip,
+      "Service Requested": submission.service,
+      Message: `State: ${submission.state}\n${notesDisplay}`,
+      "Submission Date & Time": timestamp,
+    },
+  };
 }

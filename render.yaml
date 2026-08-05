@@ -16,17 +16,19 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
-      - key: GOOGLE_OAUTH_CLIENT_ID
+      - key: DATABASE_URL
         sync: false
-      - key: GOOGLE_OAUTH_CLIENT_SECRET
+      - key: EMAILJS_SERVICE_ID
         sync: false
-      - key: GOOGLE_OAUTH_REFRESH_TOKEN
+      - key: EMAILJS_PUBLIC_KEY
         sync: false
-      - key: GOOGLE_SHEET_ID
+      - key: EMAILJS_PRIVATE_KEY
         sync: false
-      - key: GOOGLE_SHEET_RANGE
-        value: Leads!A:I
-      - key: GMAIL_SENDER_ADDRESS
+      - key: EMAILJS_TEMPLATE_ID_CONFIRMATION
+        sync: false
+      - key: EMAILJS_TEMPLATE_ID_INTERNAL
+        sync: false
+      - key: LEAD_WEBHOOK_SECRET
         sync: false
       - key: INTERNAL_NOTIFICATION_EMAIL
         sync: false
