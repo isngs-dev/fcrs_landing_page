@@ -112,6 +112,9 @@ import { SERVICE_OPTIONS, STATE_OPTIONS } from "../lib/estimate-form-schema.js";
     </form>
   </div>
 
+  <!-- Fallback success panel. The normal 200 path navigates to /thank-you
+       (see scripts/estimate-form.js); this only shows if that navigation
+       does not happen. -->
   <div id="form-success" class="form-success">
     <div class="success-icon"><i class="fa-solid fa-check"></i></div>
     <h3 id="form-success-heading">Request Received!</h3>
