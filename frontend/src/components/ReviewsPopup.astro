@@ -1,18 +1,14 @@
 ---
-// Real customer reviews, driven by a small data structure so copy/images
-// can be swapped without touching markup or JS.
-//
-// Image note: the four themed photos called for in this section's brief
-// (consultation, crew-at-work, finished-roof, inspection) are not yet in
-// public/images — they were shared as chat attachments, which this build
-// step cannot write to disk. Until real photos land, each card reuses the
-// closest-matching shot already in public/images so the section ships with
-// a sensible visual today. Drop the real files in as:
-//   public/images/reviews/alexis-lloyd.jpg   (consultation / insurance)
-//   public/images/reviews/ben-williams.jpg   (crew at work)
-//   public/images/reviews/damion-fondren.jpg (finished roof)
-//   public/images/reviews/amy-jackson.jpg    (inspection)
-// and update the `image` field below — nothing else needs to change.
+// Site-wide reviews experience, mounted once in BaseLayout so it appears on
+// every page. Two pieces:
+//   1. A small square floating button, fixed on screen at all times.
+//   2. A full-viewport modal it opens — a large, continuously drifting
+//      left-to-right 3D testimonial carousel (same drift mechanics as the
+//      in-page Reviews.astro section, sized up for a full-screen moment).
+// The modal auto-opens shortly after every load/reload (carousel already
+// drifting by the time it's visible) so it's the first thing a visitor
+// sees; closing it just dismisses that view — the next reload opens it
+// again.
 const testimonials = [
   {
     name: "Alexis Lloyd",
@@ -66,33 +62,57 @@ const testimonials = [
 ];
 ---
 
-<section id="reviews" class="reviews">
-  <div class="inner">
-    <div data-reveal class="header">
-      <span class="eyebrow">Real Customer Experiences</span>
-      <h2>Trusted by Homeowners</h2>
-      <p class="sub">
-        From inspection to installation, our team is committed to making
-        every roofing experience simple, professional, and stress-free.
-      </p>
-      <svg
-        class="roofline"
-        viewBox="0 0 600 40"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M0 38 L90 8 L180 38 L270 8 L360 38 L450 8 L540 38 L600 20"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        ></path>
-      </svg>
+<button
+  type="button"
+  class="reviews-fab"
+  id="reviews-fab"
+  aria-haspopup="dialog"
+  aria-controls="reviews-popup-modal"
+  aria-label="Open customer reviews"
+>
+  <i class="fa-solid fa-star" aria-hidden="true"></i>
+  <span>Reviews</span>
+</button>
+
+<div class="reviews-overlay" id="reviews-overlay" aria-hidden="true">
+  <div
+    class="reviews-modal"
+    id="reviews-popup-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Customer reviews"
+  >
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <span class="modal-title-copy">
+          <span class="modal-title-text">What Homeowners Say</span>
+          <span class="modal-subtitle">Real Customer Reviews</span>
+        </span>
+      </div>
+      <div class="modal-controls">
+        <button
+          type="button"
+          class="modal-btn"
+          id="reviews-popup-minimize"
+          aria-label="Minimize reviews popup"
+        >
+          <i class="fa-solid fa-minus" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="modal-btn"
+          id="reviews-popup-close"
+          aria-label="Close reviews popup"
+        >
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="badge-wrap" data-reveal>
+    <div class="badge-wrap">
       <div class="badge">
-        <i class="fa-brands fa-google"></i>
+        <i class="fa-brands fa-google" aria-hidden="true"></i>
         <span class="badge-text">
           <span class="stars">★★★★★</span>
           <span class="rating-copy">Rated 4.9/5 across Alabama &amp; Georgia</span>
@@ -100,29 +120,25 @@ const testimonials = [
       </div>
     </div>
 
-    <div class="carousel" id="reviews-carousel" data-reveal>
+    <div class="carousel" id="popup-carousel">
       <button
         type="button"
         class="nav prev"
-        id="reviews-prev"
+        id="popup-prev"
         aria-label="Previous review"
       >
-        <i class="fa-solid fa-chevron-left"></i>
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
       </button>
 
-      <div class="viewport" id="reviews-viewport">
-        <ul class="track" id="reviews-track">
+      <div class="viewport" id="popup-viewport">
+        <ul class="track" id="popup-track">
           {
             testimonials.map((t, i) => (
-              <li
-                class="card"
-                data-index={i}
-                style={`--accent:${t.accent}`}
-              >
+              <li class="card" data-index={i} style={`--accent:${t.accent}`}>
                 <div class="card-image">
                   <img src={t.image} alt="" loading="lazy" decoding="async" />
                   <span class="category-badge">
-                    <i class={t.icon} />
+                    <i class={t.icon} aria-hidden="true" />
                     {t.category}
                   </span>
                 </div>
@@ -135,7 +151,7 @@ const testimonials = [
                         {"★".repeat(t.rating)}
                       </span>
                     </div>
-                    <i class="fa-solid fa-quote-right quote-glyph" />
+                    <i class="fa-solid fa-quote-right quote-glyph" aria-hidden="true" />
                   </div>
 
                   <p class="highlight">&ldquo;{t.highlight}&rdquo;</p>
@@ -143,7 +159,7 @@ const testimonials = [
                   <blockquote class="review-text">{t.review}</blockquote>
                   <button type="button" class="read-more">
                     Read full review
-                    <i class="fa-solid fa-chevron-down" />
+                    <i class="fa-solid fa-chevron-down" aria-hidden="true" />
                   </button>
                 </div>
               </li>
@@ -155,74 +171,182 @@ const testimonials = [
       <button
         type="button"
         class="nav next"
-        id="reviews-next"
+        id="popup-next"
         aria-label="Next review"
       >
-        <i class="fa-solid fa-chevron-right"></i>
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
       </button>
     </div>
   </div>
-</section>
+</div>
 
 <style>
-  .reviews {
+  /* ---------- floating trigger ---------- */
+  .reviews-fab {
+    position: fixed;
+    left: 22px;
+    bottom: 22px;
+    z-index: 9998;
+    width: 76px;
+    height: 76px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: 0 14px 34px -12px rgba(15, 20, 25, 0.35);
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--ink);
+    opacity: 1;
+    transform: scale(1);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms ease, box-shadow 220ms ease;
+  }
+
+  .reviews-fab i {
+    color: var(--green);
+    font-size: 18px;
+  }
+
+  .reviews-fab span {
+    font-size: 11px;
+  }
+
+  .reviews-fab:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 18px 40px -12px rgba(15, 20, 25, 0.42);
+  }
+
+  .reviews-fab:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+
+  .reviews-fab.is-hidden {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+  }
+
+  /* ---------- overlay + modal ---------- */
+  .reviews-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(13, 15, 18, 0.72);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms ease;
+  }
+
+  .reviews-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .reviews-modal {
+    position: relative;
+    width: min(980px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
     background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
-    padding: var(--section-pad);
-    position: relative;
-    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.7);
+    padding: 26px 22px 34px;
+    transform: scale(0.94) translateY(10px);
+    opacity: 0;
+    transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 320ms ease;
   }
 
-  .inner {
-    max-width: 1280px;
-    margin: 0 auto;
-    position: relative;
+  .reviews-overlay.is-open .reviews-modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
   }
 
-  /* ---------- header ---------- */
-  .header {
-    text-align: center;
-    max-width: 640px;
-    margin: 0 auto 40px;
-    position: relative;
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
   }
 
-  .eyebrow {
-    display: inline-block;
+  .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .modal-title > i {
+    color: var(--green);
+    font-size: 20px;
+  }
+
+  .modal-title-copy {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  .modal-title-text {
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 12.5px;
-    letter-spacing: 2.2px;
-    text-transform: uppercase;
-    color: var(--orange);
-    margin-bottom: 12px;
-  }
-
-  .header h2 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: var(--h2);
+    font-size: 20px;
     color: #fff;
-    margin-bottom: 14px;
   }
 
-  .header .sub {
+  .modal-subtitle {
+    font-size: 12.5px;
     color: var(--dark-panel-subtext);
-    font-size: 16px;
-    line-height: 1.6;
   }
 
-  .roofline {
-    width: 220px;
-    height: 24px;
-    color: rgba(255, 255, 255, 0.08);
-    margin: 22px auto 0;
-    display: block;
+  .modal-controls {
+    display: flex;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .modal-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 180ms ease, transform 180ms ease;
+  }
+
+  .modal-btn:hover {
+    background: var(--orange);
+    transform: scale(1.06);
+  }
+
+  .modal-btn:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
   }
 
   /* ---------- google badge ---------- */
   .badge-wrap {
     text-align: center;
-    margin-bottom: 44px;
+    margin-bottom: 30px;
   }
 
   .badge {
@@ -233,11 +357,11 @@ const testimonials = [
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    padding: 14px 22px;
+    padding: 12px 20px;
   }
 
   .badge > i {
-    font-size: 26px;
+    font-size: 24px;
     color: #fff;
   }
 
@@ -249,7 +373,7 @@ const testimonials = [
   .badge-text .stars {
     display: block;
     color: var(--gold);
-    font-size: 16px;
+    font-size: 15px;
     letter-spacing: 2px;
   }
 
@@ -257,7 +381,7 @@ const testimonials = [
     display: block;
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     color: #fff;
     margin-top: 2px;
   }
@@ -267,13 +391,13 @@ const testimonials = [
     position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
   .viewport {
     flex: 1;
     overflow: hidden;
-    perspective: 1400px;
+    perspective: 1600px;
     -webkit-mask-image: linear-gradient(
       90deg,
       transparent 0,
@@ -297,7 +421,7 @@ const testimonials = [
     will-change: transform;
     transform-style: preserve-3d;
     cursor: grab;
-    padding: 20px 0 30px;
+    padding: 16px 0 20px;
   }
 
   .track.is-dragging {
@@ -306,8 +430,8 @@ const testimonials = [
 
   .nav {
     flex: 0 0 auto;
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(255, 255, 255, 0.05);
@@ -325,10 +449,15 @@ const testimonials = [
     transform: scale(1.06);
   }
 
-  /* ---------- card ---------- */
+  .nav:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+
+  /* ---------- card (bigger images per the popup treatment) ---------- */
   .card {
     flex: 0 0 auto;
-    width: min(380px, 82vw);
+    width: min(430px, 84vw);
     margin: 0 14px;
     background: rgba(255, 255, 255, 0.045);
     backdrop-filter: blur(14px);
@@ -348,7 +477,7 @@ const testimonials = [
 
   .card-image {
     position: relative;
-    height: 190px;
+    height: 260px;
     overflow: hidden;
   }
 
@@ -451,24 +580,6 @@ const testimonials = [
     color: var(--gold);
     font-size: 12.5px;
     letter-spacing: 1.5px;
-    transform: scale(1);
-    transition: transform 0.3s ease;
-  }
-
-  .card.is-active .card-top .stars {
-    animation: star-pop 0.5s ease;
-  }
-
-  @keyframes star-pop {
-    0% {
-      transform: scale(0.85);
-    }
-    55% {
-      transform: scale(1.12);
-    }
-    100% {
-      transform: scale(1);
-    }
   }
 
   .quote-glyph {
@@ -531,6 +642,21 @@ const testimonials = [
   }
 
   /* ---------- responsive ---------- */
+  @media (max-width: 720px) {
+    .reviews-modal {
+      padding: 20px 14px 26px;
+      border-radius: 22px;
+    }
+
+    .modal-title-text {
+      font-size: 17px;
+    }
+
+    .card-image {
+      height: 190px;
+    }
+  }
+
   @media (max-width: 640px) {
     .nav {
       display: none;
@@ -545,13 +671,20 @@ const testimonials = [
       -webkit-mask-image: none;
       mask-image: none;
     }
+
+    .reviews-fab {
+      width: 64px;
+      height: 64px;
+      left: 16px;
+      bottom: 88px;
+      border-radius: 18px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .card-image img,
     .category-badge,
-    .who,
-    .card-top .stars {
+    .who {
       transition: none;
       animation: none;
     }
@@ -559,48 +692,55 @@ const testimonials = [
 </style>
 
 <script>
-  function initReviewsCarousel() {
-    const root = document.getElementById("reviews-carousel");
-    if (!root) return;
+  function initReviewsPopup() {
+    const fab = document.getElementById("reviews-fab");
+    const overlay = document.getElementById("reviews-overlay");
+    const modal = document.getElementById("reviews-popup-modal");
+    const closeBtn = document.getElementById("reviews-popup-close");
+    const minimizeBtn = document.getElementById("reviews-popup-minimize");
+    const viewport = document.getElementById("popup-viewport");
+    const track = document.getElementById("popup-track");
+    const carousel = document.getElementById("popup-carousel");
+    const prevBtn = document.getElementById("popup-prev");
+    const nextBtn = document.getElementById("popup-next");
+    if (!fab || !overlay || !modal || !viewport || !track || !carousel) return;
 
-    const viewport = document.getElementById("reviews-viewport");
-    const track = document.getElementById("reviews-track");
-    const prevBtn = document.getElementById("reviews-prev");
-    const nextBtn = document.getElementById("reviews-next");
-    if (!viewport || !track || !prevBtn || !nextBtn) return;
+    const AUTO_OPEN_DELAY = 400;
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    const originalCards = Array.from(track.children);
-    const setCount = 3; // enough copies either side to loop seamlessly
+    // ---- carousel (continuous left-to-right drift, same mechanics as the
+    // in-page Reviews.astro section) ----
+    const originalCards = Array.from(track.children) as HTMLElement[];
+    const setCount = 3;
     for (let s = 1; s < setCount; s++) {
       originalCards.forEach((card) => {
         track.appendChild(card.cloneNode(true));
       });
     }
-    const cards = Array.from(track.children);
+    const cards = Array.from(track.children) as HTMLElement[];
 
     let cardWidth = 0;
     let setWidth = 0;
-    let x = 0; // current translateX, always negative or zero
-    const SPEED = 42; // px/sec, per spec (35-50px/sec)
-    let lastTime = null;
+    let x = 0;
+    const SPEED = 42;
+    let lastTime: number | null = null;
     let paused = false;
     let dragging = false;
     let dragStartX = 0;
     let dragStartTx = 0;
-    let rafId = null;
+    let rafId: number | null = null;
 
     function measure() {
       const first = cards[0];
-      const style = first.getBoundingClientRect();
-      const marginRight = parseFloat(getComputedStyle(first).marginRight);
-      const marginLeft = parseFloat(getComputedStyle(first).marginLeft);
-      cardWidth = style.width + marginLeft + marginRight;
+      const rect = first.getBoundingClientRect();
+      const style = getComputedStyle(first);
+      const marginRight = parseFloat(style.marginRight);
+      const marginLeft = parseFloat(style.marginLeft);
+      cardWidth = rect.width + marginLeft + marginRight;
       setWidth = cardWidth * originalCards.length;
-      // start roughly in the middle copy so we can loop both directions
       x = -setWidth;
       track.style.transform = `translate3d(${x}px,0,0)`;
     }
@@ -608,7 +748,7 @@ const testimonials = [
     function applyDepth() {
       const viewportRect = viewport.getBoundingClientRect();
       const centerX = viewportRect.left + viewportRect.width / 2;
-      let closestCard = null;
+      let closestCard: HTMLElement | null = null;
       let closestDist = Infinity;
 
       cards.forEach((card) => {
@@ -638,7 +778,6 @@ const testimonials = [
     }
 
     function wrap() {
-      // Keep x within one set-width of the middle copy so cards never run out.
       if (x <= -setWidth * 2) {
         x += setWidth;
       } else if (x >= 0) {
@@ -646,12 +785,12 @@ const testimonials = [
       }
     }
 
-    function tick(now) {
+    function tick(now: number) {
       if (lastTime === null) lastTime = now;
       const dt = (now - lastTime) / 1000;
       lastTime = now;
 
-      if (!paused && !dragging && !reduceMotion) {
+      if (!paused && !dragging && !reduceMotion && isOpen) {
         x -= SPEED * dt;
         wrap();
         track.style.transform = `translate3d(${x}px,0,0)`;
@@ -661,7 +800,7 @@ const testimonials = [
       rafId = requestAnimationFrame(tick);
     }
 
-    function goToStep(dir) {
+    function goToStep(dir: number) {
       x += dir * -cardWidth;
       wrap();
       track.style.transform = `translate3d(${x}px,0,0)`;
@@ -669,8 +808,6 @@ const testimonials = [
 
     // Any card left expanded when the carousel resumes gets folded back to
     // its normal, collapsed state — expansion only ever exists while paused.
-    // Sweeps every clone of every testimonial, so the loop never shows a
-    // half-expanded duplicate.
     function collapseAllExpanded() {
       cards.forEach((c) => {
         if (c.classList.contains("is-expanded")) {
@@ -678,35 +815,34 @@ const testimonials = [
           const label = c.querySelector(".read-more");
           if (label) {
             label.innerHTML =
-              'Read full review <i class="fa-solid fa-chevron-down"></i>';
+              'Read full review <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
           }
         }
       });
     }
 
-    function setPaused(value) {
+    function setPaused(value: boolean) {
       paused = value;
       if (!value) collapseAllExpanded();
     }
 
-    prevBtn.addEventListener("click", () => {
+    prevBtn?.addEventListener("click", () => {
       setPaused(false);
       goToStep(-1);
     });
-    nextBtn.addEventListener("click", () => {
+    nextBtn?.addEventListener("click", () => {
       setPaused(false);
       goToStep(1);
     });
 
-    root.addEventListener("focusin", () => setPaused(true));
-    root.addEventListener("focusout", (e) => {
-      if (!root.contains(e.relatedTarget)) setPaused(false);
+    carousel.addEventListener("focusin", () => setPaused(true));
+    carousel.addEventListener("focusout", (e) => {
+      if (!carousel.contains(e.relatedTarget as Node)) setPaused(false);
     });
 
-    // drag / swipe
     let didDrag = false;
 
-    function onPointerDown(e) {
+    function onPointerDown(e: MouseEvent | TouchEvent) {
       dragging = true;
       didDrag = false;
       track.classList.add("is-dragging");
@@ -714,7 +850,7 @@ const testimonials = [
       dragStartTx = x;
     }
 
-    function onPointerMove(e) {
+    function onPointerMove(e: MouseEvent | TouchEvent) {
       if (!dragging) return;
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const delta = clientX - dragStartX;
@@ -735,7 +871,7 @@ const testimonials = [
       track.classList.remove("is-dragging");
       if (didDrag) setPaused(false);
       // a plain tap (no drag) leaves `paused` untouched — the card's own
-      // click handler below decides play/pause for that case.
+      // click handler below is what decides play/pause for that case.
     }
 
     track.addEventListener("mousedown", onPointerDown);
@@ -745,17 +881,17 @@ const testimonials = [
     track.addEventListener("touchmove", onPointerMove, { passive: true });
     track.addEventListener("touchend", onPointerUp);
 
-    function expandCard(card) {
+    function expandCard(card: HTMLElement) {
       card.classList.add("is-expanded");
       const label = card.querySelector(".read-more");
       if (label) {
         label.innerHTML =
-          'Show less <i class="fa-solid fa-chevron-down"></i>';
+          'Show less <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
       }
       setPaused(true);
     }
 
-    // Click-to-pause, like a video: click a card to stop the drift so it
+    // Click-to-pause, like a video: click the card to stop the drift so it
     // can be read; click it again (or "Show less") to resume — which always
     // folds any expanded card back to its normal, collapsed state first.
     cards.forEach((card) => {
@@ -777,18 +913,60 @@ const testimonials = [
 
     window.addEventListener("resize", measure);
 
+    // ---- open / close state ----
+    let isOpen = false;
+    let autoOpenTimer: number | null = null;
+
+    function open() {
+      isOpen = true;
+      if (autoOpenTimer !== null) {
+        window.clearTimeout(autoOpenTimer);
+        autoOpenTimer = null;
+      }
+      overlay.classList.add("is-open");
+      overlay.setAttribute("aria-hidden", "false");
+      fab.classList.add("is-hidden");
+      document.body.style.overflow = "hidden";
+      lastTime = null;
+      window.setTimeout(() => closeBtn?.focus(), 380);
+    }
+
+    function close() {
+      isOpen = false;
+      overlay.classList.remove("is-open");
+      overlay.setAttribute("aria-hidden", "true");
+      fab.classList.remove("is-hidden");
+      document.body.style.overflow = "";
+      fab.focus();
+    }
+
+    fab.addEventListener("click", open);
+    closeBtn?.addEventListener("click", close);
+    minimizeBtn?.addEventListener("click", close);
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) close();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && isOpen) close();
+    });
+
+    autoOpenTimer = window.setTimeout(open, AUTO_OPEN_DELAY);
+
     measure();
     applyDepth();
     rafId = requestAnimationFrame(tick);
 
     document.addEventListener("astro:before-swap", () => {
       if (rafId) cancelAnimationFrame(rafId);
+      if (autoOpenTimer !== null) window.clearTimeout(autoOpenTimer);
     });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initReviewsCarousel);
+    document.addEventListener("DOMContentLoaded", initReviewsPopup);
   } else {
-    initReviewsCarousel();
+    initReviewsPopup();
   }
 </script>
