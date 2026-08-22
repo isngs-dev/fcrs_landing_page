@@ -2,64 +2,10 @@
 // Site-wide reviews experience, mounted once in BaseLayout so it appears on
 // every page. Two pieces:
 //   1. A small square floating button, fixed on screen at all times.
-//   2. A full-viewport modal it opens — a large, continuously drifting
-//      left-to-right 3D testimonial carousel (same drift mechanics as the
-//      in-page Reviews.astro section, sized up for a full-screen moment).
-// The modal auto-opens shortly after every load/reload (carousel already
-// drifting by the time it's visible) so it's the first thing a visitor
-// sees; closing it just dismisses that view — the next reload opens it
-// again.
-const testimonials = [
-  {
-    name: "Alexis Lloyd",
-    initials: "AL",
-    image: "/images/service-commercial.jpg",
-    category: "Customer Care & Insurance Support",
-    icon: "fa-solid fa-handshake",
-    accent: "var(--green)",
-    rating: 5,
-    highlight:
-      "Having someone knowledgeable there to advocate and guide us made a huge difference.",
-    review:
-      "We recently had a wonderful experience with our roofing company, and I especially wanted to recognize Christopher Waldrop for being absolutely amazing throughout the entire process. He was knowledgeable, helpful, patient, and always willing to answer our questions without making us feel rushed or pressured. One thing we truly appreciated was how respectful the company was of our time and circumstances while we worked through decisions and waited for our HELOC process to be completed. Christopher was also incredibly helpful with the insurance side of everything. He was there for appointments, helped explain the process, and made dealing with insurance much less overwhelming. Having someone knowledgeable there to advocate and guide us made a huge difference. The crew was courteous, efficient, and did excellent work. Communication was clear throughout the project, and the entire experience felt professional and well organized from start to finish. We are very happy with the final result and would absolutely recommend them to anyone looking for a trustworthy roofing company!",
-  },
-  {
-    name: "Ben Williams",
-    initials: "BW",
-    image: "/images/hero-bg.jpg",
-    category: "Professional Roofing Team",
-    icon: "fa-solid fa-helmet-safety",
-    accent: "var(--orange)",
-    rating: 5,
-    highlight: "The hardest working roofers that I have met.",
-    review:
-      "Absolutely amazing company. Josh and his team are very knowledgeable, no pressure and the hardest working roofers that I have met to ensure that my family was taken care of from initial inspection to the completion of my roof replacement. This is the team to trust!",
-  },
-  {
-    name: "Damion Fondren",
-    initials: "DF",
-    image: "/images/final-cta-bg.jpg",
-    category: "Quality Workmanship",
-    icon: "fa-solid fa-award",
-    accent: "var(--gold)",
-    rating: 5,
-    highlight: "The roof looks great, and I feel confident it was done right.",
-    review:
-      "Josh is outstanding to work with. He was honest, responsive, and walked me through the entire process so there were no surprises. His crew worked efficiently and left everything clean when they were done. The roof looks great, and I feel confident knowing it was done right. If you want someone you can trust who delivers high-quality results, I can't recommend Josh enough.",
-  },
-  {
-    name: "Amy Jackson",
-    initials: "AJ",
-    image: "/images/service-residential.jpg",
-    category: "Insurance & Roof Replacement",
-    icon: "fa-solid fa-file-shield",
-    accent: "var(--green)",
-    rating: 5,
-    highlight: "Just like that, I was approved for a new roof.",
-    review:
-      "Great experience from start to finish. Jackson came and inspected my roof. He then called my insurance on my behalf and they sent someone out with whom he met. Just like that, I was approved for a new roof. This company's customer service and employees are knowledgeable and make getting a new roof — which was badly needed — simple. Highly recommend this company!",
-  },
-];
+//   2. A full-viewport modal it opens — a customer-testimonials video.
+// The modal auto-opens shortly after every load/reload so it's the first
+// thing a visitor sees; closing it just dismisses that view — the next
+// reload opens it again.
 ---
 
 <button
@@ -120,62 +66,17 @@ const testimonials = [
       </div>
     </div>
 
-    <div class="carousel" id="popup-carousel">
-      <button
-        type="button"
-        class="nav prev"
-        id="popup-prev"
-        aria-label="Previous review"
-      >
-        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-      </button>
-
-      <div class="viewport" id="popup-viewport">
-        <ul class="track" id="popup-track">
-          {
-            testimonials.map((t, i) => (
-              <li class="card" data-index={i} style={`--accent:${t.accent}`}>
-                <div class="card-image">
-                  <img src={t.image} alt="" loading="lazy" decoding="async" />
-                  <span class="category-badge">
-                    <i class={t.icon} aria-hidden="true" />
-                    {t.category}
-                  </span>
-                </div>
-                <div class="card-body">
-                  <div class="card-top">
-                    <span class="avatar">{t.initials}</span>
-                    <div class="who">
-                      <span class="name">{t.name}</span>
-                      <span class="stars" aria-label={`${t.rating} out of 5 stars`}>
-                        {"★".repeat(t.rating)}
-                      </span>
-                    </div>
-                    <i class="fa-solid fa-quote-right quote-glyph" aria-hidden="true" />
-                  </div>
-
-                  <p class="highlight">&ldquo;{t.highlight}&rdquo;</p>
-
-                  <blockquote class="review-text">{t.review}</blockquote>
-                  <button type="button" class="read-more">
-                    Read full review
-                    <i class="fa-solid fa-chevron-down" aria-hidden="true" />
-                  </button>
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <button
-        type="button"
-        class="nav next"
-        id="popup-next"
-        aria-label="Next review"
-      >
-        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-      </button>
+    <div class="video-wrap">
+      <video
+        id="popup-video"
+        class="testimonial-video"
+        src="/videos/customer-testimonials.mp4"
+        controls
+        playsinline
+        muted
+        loop
+        preload="metadata"
+      ></video>
     </div>
   </div>
 </div>
@@ -256,14 +157,14 @@ const testimonials = [
 
   .reviews-modal {
     position: relative;
-    width: min(980px, 100%);
+    width: min(820px, 100%);
     max-height: 90vh;
     overflow-y: auto;
     background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%);
     border-radius: 28px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.7);
-    padding: 26px 22px 34px;
+    padding: 26px 22px 30px;
     transform: scale(0.94) translateY(10px);
     opacity: 0;
     transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -346,7 +247,7 @@ const testimonials = [
   /* ---------- google badge ---------- */
   .badge-wrap {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 22px;
   }
 
   .badge {
@@ -386,259 +287,21 @@ const testimonials = [
     margin-top: 2px;
   }
 
-  /* ---------- carousel shell ---------- */
-  .carousel {
+  /* ---------- testimonial video ---------- */
+  .video-wrap {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .viewport {
-    flex: 1;
+    border-radius: 18px;
     overflow: hidden;
-    perspective: 1600px;
-    -webkit-mask-image: linear-gradient(
-      90deg,
-      transparent 0,
-      #000 8%,
-      #000 92%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      90deg,
-      transparent 0,
-      #000 8%,
-      #000 92%,
-      transparent 100%
-    );
+    background: #000;
+    box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.65);
   }
 
-  .track {
-    display: flex;
-    align-items: center;
-    list-style: none;
-    will-change: transform;
-    transform-style: preserve-3d;
-    cursor: grab;
-    padding: 16px 0 20px;
-  }
-
-  .track.is-dragging {
-    cursor: grabbing;
-  }
-
-  .nav {
-    flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-
-  .nav:hover {
-    background: var(--orange);
-    border-color: var(--orange);
-    transform: scale(1.06);
-  }
-
-  .nav:focus-visible {
-    outline: 2px solid var(--orange);
-    outline-offset: 2px;
-  }
-
-  /* ---------- card (bigger images per the popup treatment) ---------- */
-  .card {
-    flex: 0 0 auto;
-    width: min(430px, 84vw);
-    margin: 0 14px;
-    background: rgba(255, 255, 255, 0.045);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.6);
-    transition: box-shadow 0.35s ease, border-color 0.35s ease;
-    transform: translateZ(0) scale(0.9) rotateY(0deg);
-    opacity: 0.6;
-  }
-
-  .card.is-active {
-    border-color: rgba(255, 255, 255, 0.22);
-    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--accent);
-  }
-
-  .card-image {
-    position: relative;
-    height: 260px;
-    overflow: hidden;
-  }
-
-  .card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .testimonial-video {
     display: block;
-    transition: transform 0.6s ease;
-  }
-
-  .card:hover .card-image img,
-  .card.is-active .card-image img {
-    transform: scale(1.045);
-  }
-
-  .card-image::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(13, 15, 18, 0) 40%, rgba(13, 15, 18, 0.85) 100%);
-  }
-
-  .category-badge {
-    position: absolute;
-    left: 16px;
-    bottom: 14px;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 11.5px;
-    letter-spacing: 0.3px;
-    color: var(--navy);
-    background: var(--accent);
-    padding: 7px 13px;
-    border-radius: 999px;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-
-  .card.is-active .category-badge {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.1s;
-  }
-
-  .card-body {
-    padding: 22px 24px 24px;
-  }
-
-  .card-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    position: relative;
-  }
-
-  .avatar {
-    flex: 0 0 auto;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--navy);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 14px;
-  }
-
-  .who {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-
-  .card.is-active .who {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  .name {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    color: #fff;
-    font-size: 15px;
-  }
-
-  .card-top .stars {
-    color: var(--gold);
-    font-size: 12.5px;
-    letter-spacing: 1.5px;
-  }
-
-  .quote-glyph {
-    margin-left: auto;
-    font-size: 22px;
-    color: rgba(255, 255, 255, 0.14);
-  }
-
-  .highlight {
-    font-family: var(--font-heading);
-    font-weight: 600;
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--gold);
-    margin-bottom: 12px;
-  }
-
-  .review-text {
-    font-size: 14.5px;
-    line-height: 1.65;
-    color: var(--dark-panel-subtext);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .card.is-expanded .review-text {
-    -webkit-line-clamp: unset;
-    overflow: visible;
-  }
-
-  .read-more {
-    margin-top: 12px;
-    background: none;
-    border: none;
-    color: #fff;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 12.5px;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .read-more i {
-    font-size: 10px;
-    transition: transform 0.3s ease;
-  }
-
-  .card.is-expanded .read-more i {
-    transform: rotate(180deg);
-  }
-
-  .read-more:hover {
-    color: var(--accent);
+    width: 100%;
+    max-height: 68vh;
+    aspect-ratio: 16 / 9;
+    background: #000;
   }
 
   /* ---------- responsive ---------- */
@@ -651,42 +314,15 @@ const testimonials = [
     .modal-title-text {
       font-size: 17px;
     }
-
-    .card-image {
-      height: 190px;
-    }
   }
 
   @media (max-width: 640px) {
-    .nav {
-      display: none;
-    }
-
-    .card {
-      width: 84vw;
-      margin: 0 8px;
-    }
-
-    .viewport {
-      -webkit-mask-image: none;
-      mask-image: none;
-    }
-
     .reviews-fab {
       width: 64px;
       height: 64px;
       left: 16px;
       bottom: 88px;
       border-radius: 18px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .card-image img,
-    .category-badge,
-    .who {
-      transition: none;
-      animation: none;
     }
   }
 </style>
@@ -698,222 +334,13 @@ const testimonials = [
     const modal = document.getElementById("reviews-popup-modal");
     const closeBtn = document.getElementById("reviews-popup-close");
     const minimizeBtn = document.getElementById("reviews-popup-minimize");
-    const viewport = document.getElementById("popup-viewport");
-    const track = document.getElementById("popup-track");
-    const carousel = document.getElementById("popup-carousel");
-    const prevBtn = document.getElementById("popup-prev");
-    const nextBtn = document.getElementById("popup-next");
-    if (!fab || !overlay || !modal || !viewport || !track || !carousel) return;
+    const video = document.getElementById(
+      "popup-video"
+    ) as HTMLVideoElement | null;
+    if (!fab || !overlay || !modal) return;
 
     const AUTO_OPEN_DELAY = 400;
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    // ---- carousel (continuous left-to-right drift, same mechanics as the
-    // in-page Reviews.astro section) ----
-    const originalCards = Array.from(track.children) as HTMLElement[];
-    const setCount = 3;
-    for (let s = 1; s < setCount; s++) {
-      originalCards.forEach((card) => {
-        track.appendChild(card.cloneNode(true));
-      });
-    }
-    const cards = Array.from(track.children) as HTMLElement[];
-
-    let cardWidth = 0;
-    let setWidth = 0;
-    let x = 0;
-    const SPEED = 42;
-    let lastTime: number | null = null;
-    let paused = false;
-    let dragging = false;
-    let dragStartX = 0;
-    let dragStartTx = 0;
-    let rafId: number | null = null;
-
-    function measure() {
-      const first = cards[0];
-      const rect = first.getBoundingClientRect();
-      const style = getComputedStyle(first);
-      const marginRight = parseFloat(style.marginRight);
-      const marginLeft = parseFloat(style.marginLeft);
-      cardWidth = rect.width + marginLeft + marginRight;
-      setWidth = cardWidth * originalCards.length;
-      x = -setWidth;
-      track.style.transform = `translate3d(${x}px,0,0)`;
-    }
-
-    function applyDepth() {
-      const viewportRect = viewport.getBoundingClientRect();
-      const centerX = viewportRect.left + viewportRect.width / 2;
-      let closestCard: HTMLElement | null = null;
-      let closestDist = Infinity;
-
-      cards.forEach((card) => {
-        const rect = card.getBoundingClientRect();
-        const cardCenter = rect.left + rect.width / 2;
-        const offset = cardCenter - centerX;
-        const dist = Math.abs(offset);
-        const norm = Math.min(dist / (viewportRect.width / 2), 1.4);
-
-        const scale = Math.max(0.82, 1 - norm * 0.22);
-        const opacity = Math.max(0.42, 1 - norm * 0.75);
-        const rotateY = Math.max(-14, Math.min(14, (offset / viewportRect.width) * -28));
-        const translateZ = -norm * 120;
-
-        card.style.transform = reduceMotion
-          ? "none"
-          : `translateZ(${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
-        card.style.opacity = String(opacity);
-
-        if (dist < closestDist) {
-          closestDist = dist;
-          closestCard = card;
-        }
-      });
-
-      cards.forEach((c) => c.classList.toggle("is-active", c === closestCard));
-    }
-
-    function wrap() {
-      if (x <= -setWidth * 2) {
-        x += setWidth;
-      } else if (x >= 0) {
-        x -= setWidth;
-      }
-    }
-
-    function tick(now: number) {
-      if (lastTime === null) lastTime = now;
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
-      if (!paused && !dragging && !reduceMotion && isOpen) {
-        x -= SPEED * dt;
-        wrap();
-        track.style.transform = `translate3d(${x}px,0,0)`;
-      }
-
-      applyDepth();
-      rafId = requestAnimationFrame(tick);
-    }
-
-    function goToStep(dir: number) {
-      x += dir * -cardWidth;
-      wrap();
-      track.style.transform = `translate3d(${x}px,0,0)`;
-    }
-
-    // Any card left expanded when the carousel resumes gets folded back to
-    // its normal, collapsed state — expansion only ever exists while paused.
-    function collapseAllExpanded() {
-      cards.forEach((c) => {
-        if (c.classList.contains("is-expanded")) {
-          c.classList.remove("is-expanded");
-          const label = c.querySelector(".read-more");
-          if (label) {
-            label.innerHTML =
-              'Read full review <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
-          }
-        }
-      });
-    }
-
-    function setPaused(value: boolean) {
-      paused = value;
-      if (!value) collapseAllExpanded();
-    }
-
-    prevBtn?.addEventListener("click", () => {
-      setPaused(false);
-      goToStep(-1);
-    });
-    nextBtn?.addEventListener("click", () => {
-      setPaused(false);
-      goToStep(1);
-    });
-
-    carousel.addEventListener("focusin", () => setPaused(true));
-    carousel.addEventListener("focusout", (e) => {
-      if (!carousel.contains(e.relatedTarget as Node)) setPaused(false);
-    });
-
-    let didDrag = false;
-
-    function onPointerDown(e: MouseEvent | TouchEvent) {
-      dragging = true;
-      didDrag = false;
-      track.classList.add("is-dragging");
-      dragStartX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      dragStartTx = x;
-    }
-
-    function onPointerMove(e: MouseEvent | TouchEvent) {
-      if (!dragging) return;
-      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const delta = clientX - dragStartX;
-      if (!didDrag && Math.abs(delta) > 10) {
-        didDrag = true;
-        setPaused(true);
-      }
-      if (didDrag) {
-        x = dragStartTx + delta;
-        wrap();
-        track.style.transform = `translate3d(${x}px,0,0)`;
-      }
-    }
-
-    function onPointerUp() {
-      if (!dragging) return;
-      dragging = false;
-      track.classList.remove("is-dragging");
-      if (didDrag) setPaused(false);
-      // a plain tap (no drag) leaves `paused` untouched — the card's own
-      // click handler below is what decides play/pause for that case.
-    }
-
-    track.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("mousemove", onPointerMove);
-    window.addEventListener("mouseup", onPointerUp);
-    track.addEventListener("touchstart", onPointerDown, { passive: true });
-    track.addEventListener("touchmove", onPointerMove, { passive: true });
-    track.addEventListener("touchend", onPointerUp);
-
-    function expandCard(card: HTMLElement) {
-      card.classList.add("is-expanded");
-      const label = card.querySelector(".read-more");
-      if (label) {
-        label.innerHTML =
-          'Show less <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
-      }
-      setPaused(true);
-    }
-
-    // Click-to-pause, like a video: click the card to stop the drift so it
-    // can be read; click it again (or "Show less") to resume — which always
-    // folds any expanded card back to its normal, collapsed state first.
-    cards.forEach((card) => {
-      const btn = card.querySelector(".read-more");
-      btn?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (card.classList.contains("is-expanded")) {
-          setPaused(false);
-        } else {
-          expandCard(card);
-        }
-      });
-
-      card.addEventListener("click", () => {
-        if (didDrag) return;
-        setPaused(!paused);
-      });
-    });
-
-    window.addEventListener("resize", measure);
-
-    // ---- open / close state ----
     let isOpen = false;
     let autoOpenTimer: number | null = null;
 
@@ -927,7 +354,12 @@ const testimonials = [
       overlay.setAttribute("aria-hidden", "false");
       fab.classList.add("is-hidden");
       document.body.style.overflow = "hidden";
-      lastTime = null;
+      if (video) {
+        video.currentTime = 0;
+        video.play().catch(() => {
+          /* autoplay blocked — the visible native controls let the visitor start it manually */
+        });
+      }
       window.setTimeout(() => closeBtn?.focus(), 380);
     }
 
@@ -937,6 +369,7 @@ const testimonials = [
       overlay.setAttribute("aria-hidden", "true");
       fab.classList.remove("is-hidden");
       document.body.style.overflow = "";
+      video?.pause();
       fab.focus();
     }
 
@@ -954,12 +387,7 @@ const testimonials = [
 
     autoOpenTimer = window.setTimeout(open, AUTO_OPEN_DELAY);
 
-    measure();
-    applyDepth();
-    rafId = requestAnimationFrame(tick);
-
     document.addEventListener("astro:before-swap", () => {
-      if (rafId) cancelAnimationFrame(rafId);
       if (autoOpenTimer !== null) window.clearTimeout(autoOpenTimer);
     });
   }
