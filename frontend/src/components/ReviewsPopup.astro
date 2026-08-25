@@ -85,6 +85,15 @@
       >
         <i class="fa-solid fa-play" aria-hidden="true"></i>
       </button>
+      <button
+        type="button"
+        class="video-sound-toggle"
+        id="popup-video-sound"
+        aria-label="Tap for sound"
+      >
+        <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
+        <span>Tap for sound</span>
+      </button>
     </div>
   </div>
 </div>
@@ -350,6 +359,43 @@
     outline-offset: 3px;
   }
 
+  /* Persistent while the video is playing muted — a real click here is a
+     genuine user gesture, so unmuting on it is always allowed, unlike
+     unmuting programmatically right after an autoplay start (which some
+     browsers silently ignore as a policy-circumvention pattern). */
+  .video-sound-toggle {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: none;
+    background: var(--orange);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor: pointer;
+    box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.5);
+    transition: transform 180ms ease, background 180ms ease;
+  }
+
+  .video-sound-toggle.is-visible {
+    display: inline-flex;
+  }
+
+  .video-sound-toggle:hover {
+    transform: scale(1.04);
+  }
+
+  .video-sound-toggle:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 720px) {
     .reviews-modal {
@@ -384,9 +430,10 @@
       "popup-video"
     ) as HTMLVideoElement | null;
     const playFallback = document.getElementById("popup-video-fallback");
+    const soundToggle = document.getElementById("popup-video-sound");
     if (!fab || !overlay || !modal) return;
 
-    console.log("[reviews popup] script v2 initialized");
+    console.log("[reviews popup] script v3 initialized");
 
     const AUTO_OPEN_DELAY = 400;
 
@@ -481,8 +528,13 @@
 
     // Browsers only block *starting* playback with sound without a user
     // gesture — once the video is already playing (muted), unmuting it via
-    // script is not gesture-restricted. So the visitor hears audio
-    // automatically, with no manual unmute needed.
+    // script is technically not gesture-restricted, so this is attempted
+    // automatically first. Some browsers still quietly ignore it though
+    // (treating an immediate auto-unmute as a policy-circumvention
+    // pattern), which is what the visible sound toggle button below is
+    // for: it stays in sync with the video's real muted state via the
+    // `volumechange` event, so if the automatic attempt didn't stick, a
+    // guaranteed one-tap control is always right there.
     function unmuteNow() {
       if (video) video.muted = false;
     }
@@ -495,6 +547,14 @@
       playFallback?.classList.remove("is-visible");
     }
 
+    function syncSoundToggle() {
+      if (!video || !soundToggle) return;
+      soundToggle.classList.toggle(
+        "is-visible",
+        video.muted && !video.paused
+      );
+    }
+
     playFallback?.addEventListener("click", () => {
       video
         ?.play()
@@ -503,7 +563,17 @@
       hidePlayFallback();
     });
 
-    video?.addEventListener("play", hidePlayFallback);
+    soundToggle?.addEventListener("click", () => {
+      // A direct click is a genuine user gesture, so this is always allowed.
+      if (video) video.muted = false;
+    });
+
+    video?.addEventListener("play", () => {
+      hidePlayFallback();
+      syncSoundToggle();
+    });
+    video?.addEventListener("pause", syncSoundToggle);
+    video?.addEventListener("volumechange", syncSoundToggle);
 
     function close() {
       isOpen = false;
