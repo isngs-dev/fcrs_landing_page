@@ -78,6 +78,14 @@
         muted
         preload="auto"
       ></video>
+      <button
+        type="button"
+        class="video-play-fallback"
+        id="popup-video-fallback"
+        aria-label="Play video"
+      >
+        <i class="fa-solid fa-play" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 </div>
@@ -305,6 +313,44 @@
     background: #000;
   }
 
+  /* Shown only if the browser blocks autoplay outright — a single tap here
+     is a genuine user gesture, so play() is guaranteed to succeed. */
+  .video-play-fallback {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(13, 15, 18, 0.65);
+    color: #fff;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 4px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+
+  .video-play-fallback.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .video-play-fallback:hover {
+    transform: scale(1.06);
+    background: var(--orange);
+  }
+
+  .video-play-fallback:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 3px;
+  }
+
   /* ---------- responsive ---------- */
   @media (max-width: 720px) {
     .reviews-modal {
@@ -338,6 +384,7 @@
     const video = document.getElementById(
       "popup-video"
     ) as HTMLVideoElement | null;
+    const playFallback = document.getElementById("popup-video-fallback");
     if (!fab || !overlay || !modal) return;
 
     const AUTO_OPEN_DELAY = 400;
@@ -355,26 +402,42 @@
       overlay.setAttribute("aria-hidden", "false");
       fab.classList.add("is-hidden");
       document.body.style.overflow = "hidden";
+      hidePlayFallback();
       if (video) {
-        video.currentTime = 0;
         // Belt-and-braces for autoplay policies across browsers: the
         // `muted`/`playsinline` attributes cover Chrome, Firefox, Edge, and
         // iOS/desktop Safari, but some in-app or older browsers still need
         // the JS property set explicitly right before play() is called.
         video.muted = true;
         video.playsInline = true;
-        attemptPlay();
+        if (video.currentTime > 0 || video.ended) video.currentTime = 0;
+        playVideoWhenReady();
       }
       window.setTimeout(() => closeBtn?.focus(), 380);
+    }
+
+    // Don't attempt play() until the browser actually has enough data
+    // buffered — calling it too early on a slow connection can surface the
+    // same rejection as a real autoplay block and mask the real cause.
+    function playVideoWhenReady() {
+      if (!video) return;
+      if (video.readyState >= 3) {
+        attemptPlay();
+      } else {
+        video.addEventListener("canplay", attemptPlay, { once: true });
+      }
     }
 
     function attemptPlay() {
       if (!video) return;
       const playResult = video.play();
       if (playResult && typeof playResult.catch === "function") {
-        playResult.catch(() => {
-          // Autoplay was blocked outright — fall back to starting playback
-          // on the visitor's very first interaction with the page.
+        playResult.then(hidePlayFallback).catch(() => {
+          // Autoplay was blocked outright — show a tap-to-play control (a
+          // click there is a genuine user gesture, so play() is guaranteed
+          // to succeed), and also resume on the visitor's very next
+          // interaction with the page in case they miss the button.
+          showPlayFallback();
           const resume = () => {
             video.play().catch(() => {});
             document.removeEventListener("pointerdown", resume);
@@ -385,6 +448,21 @@
         });
       }
     }
+
+    function showPlayFallback() {
+      playFallback?.classList.add("is-visible");
+    }
+
+    function hidePlayFallback() {
+      playFallback?.classList.remove("is-visible");
+    }
+
+    playFallback?.addEventListener("click", () => {
+      video?.play().catch(() => {});
+      hidePlayFallback();
+    });
+
+    video?.addEventListener("play", hidePlayFallback);
 
     function close() {
       isOpen = false;
