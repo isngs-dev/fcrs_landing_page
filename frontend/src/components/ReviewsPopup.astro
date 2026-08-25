@@ -405,27 +405,43 @@
       document.body.style.overflow = "hidden";
       hidePlayFallback();
       if (video) {
-        // Belt-and-braces for autoplay policies across browsers: the
-        // `muted`/`playsinline` attributes cover Chrome, Firefox, Edge, and
-        // iOS/desktop Safari, but some in-app or older browsers still need
-        // the JS property set explicitly right before play() is called.
-        video.muted = true;
-        video.playsInline = true;
-        video.currentTime = 0;
-        playVideoWhenReady();
+        try {
+          // Belt-and-braces for autoplay policies across browsers: the
+          // `muted`/`playsinline` attributes cover Chrome, Firefox, Edge,
+          // and iOS/desktop Safari, but some in-app or older browsers
+          // still need the JS property set explicitly before play().
+          video.muted = true;
+          video.playsInline = true;
+          playVideoWhenReady();
+        } catch (err) {
+          console.error("[reviews popup] video setup threw:", err);
+          showPlayFallback();
+        }
       }
       window.setTimeout(() => closeBtn?.focus(), 380);
     }
 
     // Don't attempt play() until the browser actually has enough data
     // buffered — calling it too early on a slow connection can surface the
-    // same rejection as a real autoplay block and mask the real cause.
+    // same rejection as a real autoplay block and mask the real cause. This
+    // also means `currentTime` is only ever touched once metadata is
+    // definitely loaded: setting it any earlier (HAVE_NOTHING) can throw a
+    // synchronous InvalidStateError in some browsers, which would silently
+    // abort this whole function and mean play() never even gets called.
     function playVideoWhenReady() {
       if (!video) return;
-      if (video.readyState >= 3) {
+      const rewindAndPlay = () => {
+        try {
+          video.currentTime = 0;
+        } catch (err) {
+          // Not fatal — just means it resumes from wherever it left off.
+        }
         attemptPlay();
+      };
+      if (video.readyState >= 3) {
+        rewindAndPlay();
       } else {
-        video.addEventListener("canplay", attemptPlay, { once: true });
+        video.addEventListener("canplay", rewindAndPlay, { once: true });
       }
     }
 
