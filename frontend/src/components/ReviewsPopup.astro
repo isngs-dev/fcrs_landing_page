@@ -464,6 +464,19 @@
           console.error("[reviews popup] video setup threw:", err);
           showPlayFallback();
         }
+        // Watchdog: whatever the reason — a rejected promise we handle
+        // below, a promise that never settles, or a failure mode specific
+        // to one browser engine we didn't anticipate — if the video's
+        // playback position hasn't actually moved a couple seconds after
+        // opening, surface the manual play button regardless of why.
+        // `video.paused` isn't a reliable signal here: it flips to false
+        // the instant play() is *called*, before playback is confirmed.
+        const positionAtOpen = video.currentTime;
+        window.setTimeout(() => {
+          if (isOpen && video.currentTime <= positionAtOpen + 0.1) {
+            showPlayFallback();
+          }
+        }, 2000);
       }
       window.setTimeout(() => closeBtn?.focus(), 380);
     }
