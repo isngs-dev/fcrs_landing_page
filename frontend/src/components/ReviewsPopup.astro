@@ -14,10 +14,10 @@
   id="reviews-fab"
   aria-haspopup="dialog"
   aria-controls="reviews-popup-modal"
-  aria-label="Open customer reviews"
+  aria-label="Open customer stories"
 >
   <i class="fa-solid fa-star" aria-hidden="true"></i>
-  <span>Reviews</span>
+  <span>Customer Stories</span>
 </button>
 
 <div class="reviews-overlay" id="reviews-overlay" aria-hidden="true">
@@ -105,13 +105,14 @@
     left: 22px;
     bottom: 22px;
     z-index: 9998;
-    width: 76px;
-    height: 76px;
+    width: 88px;
+    height: 88px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 4px;
+    padding: 6px;
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 20px;
@@ -132,7 +133,9 @@
   }
 
   .reviews-fab span {
-    font-size: 11px;
+    font-size: 10.5px;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .reviews-fab:hover {
@@ -410,11 +413,15 @@
 
   @media (max-width: 640px) {
     .reviews-fab {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       left: 16px;
       bottom: 88px;
       border-radius: 18px;
+    }
+
+    .reviews-fab span {
+      font-size: 9.5px;
     }
   }
 </style>
