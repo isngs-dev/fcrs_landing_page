@@ -72,9 +72,11 @@
         class="testimonial-video"
         src="/videos/customer-testimonials.mp4"
         controls
+        autoplay
         playsinline
+        webkit-playsinline="true"
         muted
-        preload="metadata"
+        preload="auto"
       ></video>
     </div>
   </div>
@@ -355,11 +357,33 @@
       document.body.style.overflow = "hidden";
       if (video) {
         video.currentTime = 0;
-        video.play().catch(() => {
-          /* autoplay blocked — the visible native controls let the visitor start it manually */
-        });
+        // Belt-and-braces for autoplay policies across browsers: the
+        // `muted`/`playsinline` attributes cover Chrome, Firefox, Edge, and
+        // iOS/desktop Safari, but some in-app or older browsers still need
+        // the JS property set explicitly right before play() is called.
+        video.muted = true;
+        video.playsInline = true;
+        attemptPlay();
       }
       window.setTimeout(() => closeBtn?.focus(), 380);
+    }
+
+    function attemptPlay() {
+      if (!video) return;
+      const playResult = video.play();
+      if (playResult && typeof playResult.catch === "function") {
+        playResult.catch(() => {
+          // Autoplay was blocked outright — fall back to starting playback
+          // on the visitor's very first interaction with the page.
+          const resume = () => {
+            video.play().catch(() => {});
+            document.removeEventListener("pointerdown", resume);
+            document.removeEventListener("keydown", resume);
+          };
+          document.addEventListener("pointerdown", resume, { once: true });
+          document.addEventListener("keydown", resume, { once: true });
+        });
+      }
     }
 
     function close() {
