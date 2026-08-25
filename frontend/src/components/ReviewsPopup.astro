@@ -74,7 +74,6 @@
         controls
         playsinline
         muted
-        loop
         preload="metadata"
       ></video>
     </div>
@@ -376,6 +375,11 @@
     fab.addEventListener("click", open);
     closeBtn?.addEventListener("click", close);
     minimizeBtn?.addEventListener("click", close);
+
+    // Auto-close once the testimonial video finishes — no manual close needed.
+    video?.addEventListener("ended", () => {
+      if (isOpen) close();
+    });
 
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) close();
