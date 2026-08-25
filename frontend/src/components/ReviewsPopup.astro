@@ -432,21 +432,37 @@
       if (!video) return;
       const playResult = video.play();
       if (playResult && typeof playResult.catch === "function") {
-        playResult.then(hidePlayFallback).catch(() => {
-          // Autoplay was blocked outright — show a tap-to-play control (a
-          // click there is a genuine user gesture, so play() is guaranteed
-          // to succeed), and also resume on the visitor's very next
-          // interaction with the page in case they miss the button.
-          showPlayFallback();
-          const resume = () => {
-            video.play().catch(() => {});
-            document.removeEventListener("pointerdown", resume);
-            document.removeEventListener("keydown", resume);
-          };
-          document.addEventListener("pointerdown", resume, { once: true });
-          document.addEventListener("keydown", resume, { once: true });
-        });
+        playResult
+          .then(() => {
+            hidePlayFallback();
+            unmuteNow();
+          })
+          .catch(() => {
+            // Autoplay was blocked outright — show a tap-to-play control (a
+            // click there is a genuine user gesture, so play() is
+            // guaranteed to succeed), and also resume on the visitor's
+            // very next interaction with the page in case they miss it.
+            showPlayFallback();
+            const resume = () => {
+              video
+                .play()
+                .then(unmuteNow)
+                .catch(() => {});
+              document.removeEventListener("pointerdown", resume);
+              document.removeEventListener("keydown", resume);
+            };
+            document.addEventListener("pointerdown", resume, { once: true });
+            document.addEventListener("keydown", resume, { once: true });
+          });
       }
+    }
+
+    // Browsers only block *starting* playback with sound without a user
+    // gesture — once the video is already playing (muted), unmuting it via
+    // script is not gesture-restricted. So the visitor hears audio
+    // automatically, with no manual unmute needed.
+    function unmuteNow() {
+      if (video) video.muted = false;
     }
 
     function showPlayFallback() {
@@ -458,7 +474,10 @@
     }
 
     playFallback?.addEventListener("click", () => {
-      video?.play().catch(() => {});
+      video
+        ?.play()
+        .then(unmuteNow)
+        .catch(() => {});
       hidePlayFallback();
     });
 
