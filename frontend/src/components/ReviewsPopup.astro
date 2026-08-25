@@ -72,7 +72,6 @@
         class="testimonial-video"
         src="/videos/customer-testimonials.mp4"
         controls
-        autoplay
         playsinline
         webkit-playsinline="true"
         muted
@@ -387,6 +386,8 @@
     const playFallback = document.getElementById("popup-video-fallback");
     if (!fab || !overlay || !modal) return;
 
+    console.log("[reviews popup] script v2 initialized");
+
     const AUTO_OPEN_DELAY = 400;
 
     let isOpen = false;
@@ -410,7 +411,7 @@
         // the JS property set explicitly right before play() is called.
         video.muted = true;
         video.playsInline = true;
-        if (video.currentTime > 0 || video.ended) video.currentTime = 0;
+        video.currentTime = 0;
         playVideoWhenReady();
       }
       window.setTimeout(() => closeBtn?.focus(), 380);
@@ -437,11 +438,16 @@
             hidePlayFallback();
             unmuteNow();
           })
-          .catch(() => {
+          .catch((err) => {
             // Autoplay was blocked outright — show a tap-to-play control (a
             // click there is a genuine user gesture, so play() is
             // guaranteed to succeed), and also resume on the visitor's
             // very next interaction with the page in case they miss it.
+            console.warn(
+              "[reviews popup] autoplay blocked:",
+              err && err.name,
+              err && err.message
+            );
             showPlayFallback();
             const resume = () => {
               video
