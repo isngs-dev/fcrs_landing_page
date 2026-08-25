@@ -512,7 +512,15 @@
         playResult
           .then(() => {
             hidePlayFallback();
-            unmuteNow();
+            // Do NOT unmute here. Chrome doesn't just ignore an unmute
+            // attempt that lacks a real user gesture — it PAUSES the
+            // whole video as a consequence ("Unmuting failed and the
+            // element was paused instead because the user didn't
+            // interact with the document before"). So the video stays
+            // muted-but-playing, and unmuting only ever happens inside a
+            // real click/keydown handler (the sound toggle button, or the
+            // very next interaction anywhere on the page below).
+            armFirstInteractionUnmute();
           })
           .catch((err) => {
             // Autoplay was blocked outright — show a tap-to-play control (a
@@ -525,31 +533,25 @@
               err && err.message
             );
             showPlayFallback();
-            const resume = () => {
-              video
-                .play()
-                .then(unmuteNow)
-                .catch(() => {});
-              document.removeEventListener("pointerdown", resume);
-              document.removeEventListener("keydown", resume);
-            };
-            document.addEventListener("pointerdown", resume, { once: true });
-            document.addEventListener("keydown", resume, { once: true });
+            armFirstInteractionUnmute();
           });
       }
     }
 
-    // Browsers only block *starting* playback with sound without a user
-    // gesture — once the video is already playing (muted), unmuting it via
-    // script is technically not gesture-restricted, so this is attempted
-    // automatically first. Some browsers still quietly ignore it though
-    // (treating an immediate auto-unmute as a policy-circumvention
-    // pattern), which is what the visible sound toggle button below is
-    // for: it stays in sync with the video's real muted state via the
-    // `volumechange` event, so if the automatic attempt didn't stick, a
-    // guaranteed one-tap control is always right there.
-    function unmuteNow() {
-      if (video) video.muted = false;
+    // Any click/tap/keypress anywhere on the page is a genuine user
+    // gesture, so unmuting inside this handler is always safe — unlike
+    // unmuting right after an unattended autoplay start, which Chrome
+    // punishes by pausing the video outright (see attemptPlay() above).
+    function armFirstInteractionUnmute() {
+      if (!video) return;
+      const resume = () => {
+        video.muted = false;
+        video.play().catch(() => {});
+        document.removeEventListener("pointerdown", resume);
+        document.removeEventListener("keydown", resume);
+      };
+      document.addEventListener("pointerdown", resume, { once: true });
+      document.addEventListener("keydown", resume, { once: true });
     }
 
     function showPlayFallback() {
@@ -569,10 +571,13 @@
     }
 
     playFallback?.addEventListener("click", () => {
-      video
-        ?.play()
-        .then(unmuteNow)
-        .catch(() => {});
+      // Set muted synchronously inside the click handler itself (not
+      // inside a later .then()) — this is the pattern Chrome reliably
+      // honors as a genuine user gesture.
+      if (video) {
+        video.muted = false;
+        video.play().catch(() => {});
+      }
       hidePlayFallback();
     });
 
