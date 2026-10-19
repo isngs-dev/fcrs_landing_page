@@ -22,6 +22,29 @@ const { title, description } = Astro.props;
       })(window,document,'script','dataLayer','GTM-K99VSPCL');
     </script>
     <!-- End Google Tag Manager -->
+    <!-- Google tag (gtag.js) -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-7YQ4H8W4S9"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7YQ4H8W4S9');
+      gtag('config', 'AW-16604740476');
+
+      // Google Ads "Click to call" conversion, fired for every tel: link on
+      // the site. Unlike Google's stock gtag_report_conversion snippet, this
+      // never blocks the dial — tel: links don't unload the page, so the event
+      // still sends, and an ad blocker can't stop the call from going through.
+      document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('a[href^="tel:"]');
+        if (!link) return;
+        gtag('event', 'conversion', {
+          'send_to': 'AW-16604740476/_qOYCMb03ZUdEPz24O09',
+          'value': 1.0,
+          'currency': 'USD'
+        });
+      });
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
